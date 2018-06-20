@@ -493,4 +493,25 @@ class core_question_renderer extends plugin_renderer_base {
                         array('class' => 'responsehistoryheader'));
     }
 
+    // Demanda ( Questoes aleatorias ) +++
+    // Pop-up para exibir observacoes adicionadas nas questoes
+    public function question_preview_link_note($questionid, context $context, $showlabel, $link, $couserid) {
+        
+        if ($showlabel) {
+            $alt = '';
+            $label = ' ' . 'Visualizar comentário';
+            $attributes = array();
+        } else {
+            $alt = 'Visualizar comentário';
+            $label = '';
+            $attributes = array('title' => $alt);
+        }
+
+        $link = $link . '/question/preview_note.php?courseid=' . $couserid . '&id=' . $questionid;
+        $image = $this->pix_icon('t/messages', $alt, '', array('class' => 'iconsmall'));
+        $action = new popup_action('click', $link, 'questionpreview', question_preview_popup_params());
+
+        return $this->action_link($link, $image, $action, $attributes);
+    }
+
 }

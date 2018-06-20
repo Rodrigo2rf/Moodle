@@ -269,6 +269,26 @@ class_alias('core_question\bank\question_text_row', 'question_bank_question_text
  */
 class_alias('core_question\bank\view', 'question_bank_view', true);
 
+// Demanda ( Questoes aleatorias ){
+    /**
+     * Icone na lista de informacoes para o campo de validar questoes
+     *
+     * @copyright  2015
+     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+     * @deprecated since Moodle 2.8 MDL-40457
+     */
+    class_alias('core_question\bank\validator_action_column', 'question_bank_validador_action_column', true);
+
+    /**
+     * Icone na lista de informacoes para o campo de observacao adicionada a questao
+     *
+     * @copyright  2015 
+     * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+     * @deprecated since Moodle 2.8 MDL-40457
+     */
+    class_alias('core_question\bank\note_action_column', 'question_bank_note_action_column', true);
+// }
+
 /**
  * Common setup for all pages for editing questions.
  * @param string $baseurl the name of the script calling this funciton. For examle 'qusetion/edit.php'.

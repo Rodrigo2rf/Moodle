@@ -316,6 +316,21 @@ class question_type {
         $question->length = $this->actual_number_of_questions($question);
         $question->penalty = isset($form->penalty) ? $form->penalty : 0;
 
+        // Demanda ( Questoes aleatorias ){
+            // Recebe os dados do formulario e prepara para submeter
+            if(!empty($form->nivel)){
+                $question->nivel = trim($form->nivel);
+            }
+            if(!empty($form->validada)){
+                $question->validada   = trim($form->validada);
+            }
+            if(empty($form->observacao)){
+                $question->observacao = '';
+            }else{
+                $question->observacao = trim($form->observacao);
+            }
+        // }
+
         // The trim call below has the effect of casting any strange values received,
         // like null or false, to an appropriate string, so we only need to test for
         // missing values. Be careful not to break the value '0' here.

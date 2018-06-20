@@ -201,6 +201,30 @@ abstract class question_edit_form extends question_wizard_form {
         // Any questiontype specific fields.
         $this->definition_inner($mform);
 
+        // Demanda ( Questoes aleatorias ){
+            $mform->addElement('header', 'generalheader', 'Adicionar dificuldade');
+
+            // Adiciona o Select
+            $select = $mform->createElement('select', 'nivel', 'Selecionar nível');
+            $select->addOption('Selecione', '', array('disabled' => 'disabled', 'selected' => 'selected'));
+            $select->addOption('Fácil', 1);
+            $select->addOption('Médio', 2);
+            $select->addOption('Difícil', 3);
+            $selecionarNivel = $mform->addElement($select);
+            $mform->setType('nivel', PARAM_INT);
+            $mform->addRule('nivel', "Você deve adicionar o nivel da questão", 'required', 'numeric', 'client');
+
+            // Adiciona o Radiobutton 
+            $radioarray = array();
+            $radioarray[] = $mform->createElement('radio', 'validada', '', 'Sim', 1);
+            $radioarray[] = $mform->createElement('radio', 'validada', '', 'Não',  2);
+            $mform->addGroup($radioarray, 'radioar', 'Aprovar questão', array(' ', ' '), false);
+
+            // Adicionar o Textarea
+            $mform->addElement('textarea', 'observacao', 'Adicionar Observação', array('wrap' => 'virtual', 'cols' => 55));
+            $mform->setType('name', PARAM_TEXT);
+        // }
+
         if (core_tag_tag::is_enabled('core_question', 'question')) {
             $this->add_tag_fields($mform);
         }

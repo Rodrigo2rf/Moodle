@@ -122,9 +122,11 @@ class view {
     protected function wanted_columns() {
         global $CFG;
 
+        // Demanda ( Questoes aleatorias )
+        // Adicionado os itens: 'validator_action_column', 'note_action_column', que sao reponsaveis pela exibicao dos icones na edicao do questionario
         if (empty($CFG->questionbankcolumns)) {
             $questionbankcolumns = array('checkbox_column', 'question_type_column',
-                                     'question_name_column', 'tags_action_column', 'edit_action_column',
+                                     'question_name_column', 'note_action_column', 'validator_action_column', 'tags_action_column', 'edit_action_column',
                                      'copy_action_column', 'preview_action_column', 'delete_action_column',
                                      'creator_name_column', 'modifier_name_column');
         } else {
@@ -964,4 +966,27 @@ class view {
     public function add_searchcondition($searchcondition) {
         $this->searchconditions[] = $searchcondition;
     }
+
+    // Demanda ( Questoes aleatorias ){
+        /**
+         * Prepara link para a pagina de editar questao
+         */
+        public function edit_question_edit_url($questionid, $courseid, $cmid = null, $category = null, $qpage = null, $ordenacao) {
+            if( !empty( $cmid )){
+                return "edit_validate_question.php?returnurl=%2Fquestion%2Fedit_validate_question.php?id=".$questionid."&id=".$questionid."&cmid=".$cmid."".$this->completar_link("cat",$category)."".$this->completar_link("qpage",$qpage);  
+            }else{
+                return "edit_validate_question.php?returnurl=%2Fquestion%2Fedit_validate_question.php?courseid%3D".$courseid."&courseid=".$courseid."&id=".$questionid."".$this->completar_link("cat",$category)."".$this->completar_link("qpage",$qpage);  
+            }
+
+            // http://localhost/moodle35/question/question.php?returnurl=%2Fquestion%2Fedit.php%3Fcourseid%3D2&courseid=2&id=1
+            // http://localhost/moodle35/question/question.php?returnurl=%2Fquestion%2Fedit.php%3Fcourseid%3D2&courseid=2&id=1  
+        }
+    
+        public function completar_link($tipo, $valor){
+            if($valor != null){
+                return "&".$tipo."=".$valor;
+            }
+        }
+    // }
+    
 }
