@@ -89,10 +89,41 @@ class random_question_loader {
      *      in order to be eligible for being picked.
      * @return int|null the id of the question picked, or null if there aren't any.
      */
-    public function get_next_question_id($categoryid, $includesubcategories, $tagids = []) {
-        $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
+    // public function get_next_question_id($categoryid, $includesubcategories, $tagids = []) {
+    //     $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
 
+    //     $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
+    //     if (empty($this->availablequestionscache[$categorykey])) {
+    //         return null;
+    //     }
+
+    //     reset($this->availablequestionscache[$categorykey]);
+    //     $lowestcount = key($this->availablequestionscache[$categorykey]);
+    //     reset($this->availablequestionscache[$categorykey][$lowestcount]);
+    //     $questionid = key($this->availablequestionscache[$categorykey][$lowestcount]);
+    //     $this->use_question($questionid);
+    //     return $questionid;
+    // }
+
+        /**
+     * Pick a question at random from the given category, from among those with the fewest uses.
+     *
+     * It is up the the caller to verify that the cateogry exists. An unknown category
+     * behaves like an empty one.
+     *
+     * @param int $categoryid the id of a category in the question bank.
+     * @param bool $includesubcategories wether to pick a question from exactly
+     *      that category, or that category and subcategories.
+     * @return int|null the id of the question picked, or null if there aren't any.
+     */
+    // Demanda ( Questoes aleatorias ) +++
+    public function get_next_question_id($categoryid, $includesubcategories, $tagids = [], $nivel = null, $validada = null) {
+
+        global $DB;
+
+        $this->ensure_questions_for_category_loaded($categoryid, $includesubcategories, $tagids);
         $categorykey = $this->get_category_key($categoryid, $includesubcategories, $tagids);
+
         if (empty($this->availablequestionscache[$categorykey])) {
             return null;
         }
@@ -100,10 +131,31 @@ class random_question_loader {
         reset($this->availablequestionscache[$categorykey]);
         $lowestcount = key($this->availablequestionscache[$categorykey]);
         reset($this->availablequestionscache[$categorykey][$lowestcount]);
-        $questionid = key($this->availablequestionscache[$categorykey][$lowestcount]);
-        $this->use_question($questionid);
+
+        if( $nivel != null && $validada != null ){
+            $questions = "";
+            foreach ($this->availablequestionscache[$categorykey][$lowestcount] as $key => $value) {
+                $questions .= $key;
+                $questions .= ',';
+            }
+            $questions = rtrim($questions,',');
+            $sql = "SELECT * FROM mdl_question WHERE id IN ( {$questions} ) ORDER BY RANDOM()";
+            $questions = $DB->get_records_sql($sql);
+            $ids = array();
+            foreach ($questions as $value) {
+                if( $value->nivel == $nivel && $value->validada == $validada ){
+                    $ids[$value->id] = 1;
+                }
+            }
+            $questionid = key( $ids );  
+            $this->use_question($questionid);
+        }else{
+            $questionid = key($this->availablequestionscache[$categorykey][$lowestcount]);  
+            $this->use_question($questionid);
+        }
         return $questionid;
     }
+    // +++
 
     /**
      * Get the key into {@link $availablequestionscache} for this combination of options.

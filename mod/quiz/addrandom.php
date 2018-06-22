@@ -81,40 +81,115 @@ if ($mform->is_cancelled()) {
     redirect($returnurl);
 }
 
+// if ($data = $mform->get_data()) {
+//     if (!empty($data->existingcategory)) {
+//         list($categoryid) = explode(',', $data->category);
+//         $includesubcategories = !empty($data->includesubcategories);
+//         if (!$includesubcategories) {
+//             // If the chosen category is a top category.
+//             $includesubcategories = $DB->record_exists('question_categories', ['id' => $categoryid, 'parent' => 0]);
+//         }
+//         $returnurl->param('cat', $data->category);
+
+//     } else if (!empty($data->newcategory)) {
+//         list($parentid, $contextid) = explode(',', $data->parent);
+//         $categoryid = $qcobject->add_category($data->parent, $data->name, '', true);
+//         $includesubcategories = 0;
+
+//         $returnurl->param('cat', $categoryid . ',' . $contextid);
+//     } else {
+//         throw new coding_exception(
+//                 'It seems a form was submitted without any button being pressed???');
+//     }
+
+//     if (empty($data->fromtags)) {
+//         $data->fromtags = [];
+//     }
+
+//     $tagids = array_map(function($tagstrings) {
+//         return (int)explode(',', $tagstrings)[0];
+//     }, $data->fromtags);
+
+//     quiz_add_random_questions($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories, $tagids);
+//     quiz_delete_previews($quiz);
+//     quiz_update_sumgrades($quiz);
+//     redirect($returnurl);
+// }
+
+// Demanda ( Questoes aleatorias ) +++
+// recebe os dados do addrandomform envia os dados para serem persistidos
 if ($data = $mform->get_data()) {
-    if (!empty($data->existingcategory)) {
+
+    if (!empty($data->existingcategory) && empty($data->randomquestionybylevel)) {
+
+        unset($data->numberofeasy);
+        unset($data->numberofmedium);
+        unset($data->numberofhard);
+        unset($data->activitySelector);
+
         list($categoryid) = explode(',', $data->category);
         $includesubcategories = !empty($data->includesubcategories);
-        if (!$includesubcategories) {
-            // If the chosen category is a top category.
-            $includesubcategories = $DB->record_exists('question_categories', ['id' => $categoryid, 'parent' => 0]);
-        }
         $returnurl->param('cat', $data->category);
 
+        $addrandomquestionbylevel = false;
+
     } else if (!empty($data->newcategory)) {
+
+        unset($data->numberofeasy);
+        unset($data->numberofmedium);
+        unset($data->numberofhard);
+        unset($data->activitySelector);
+        
         list($parentid, $contextid) = explode(',', $data->parent);
         $categoryid = $qcobject->add_category($data->parent, $data->name, '', true);
         $includesubcategories = 0;
 
         $returnurl->param('cat', $categoryid . ',' . $contextid);
+
+        $addrandomquestionbylevel = false;  
+
+    } else if (!empty($data->randomquestionybylevel)) {
+
+        if(!empty($data->activitySelector)){
+            $data->category = $data->activitySelector;
+        }
+
+        if(!empty($data->activitySelector)){
+            if($data->activitySelector != $data->category){
+                $data->category = $data->activitySelector;
+            }
+        }
+
+        list($categoryid) = explode(',', $data->category);
+        $includesubcategories = !empty($data->includesubcategories);
+        $returnurl->param('cat', $data->idcategoryparent);
+
+        $addrandomquestionbylevel = true;
+
     } else {
         throw new coding_exception(
                 'It seems a form was submitted without any button being pressed???');
     }
 
-    if (empty($data->fromtags)) {
-        $data->fromtags = [];
+    if ($addrandomquestionbylevel) {
+
+        $data->numbertoadd = $data->numberofeasy + $data->numberofmedium + $data->numberofhard;
+        if($data->numbertoadd != 0){
+            quiz_add_random_questions_by_specific_level($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories, $data->numberofeasy, $data->numberofmedium, $data->numberofhard);
+            quiz_delete_previews($quiz);
+            quiz_update_sumgrades($quiz);
+            redirect($returnurl);
+        }else{ 
+            redirect($returnurl);
+        }
+    }else{
+        quiz_add_random_questions($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories);
+        quiz_delete_previews($quiz);
+        quiz_update_sumgrades($quiz);
+        redirect($returnurl);
     }
-
-    $tagids = array_map(function($tagstrings) {
-        return (int)explode(',', $tagstrings)[0];
-    }, $data->fromtags);
-
-    quiz_add_random_questions($quiz, $addonpage, $categoryid, $data->numbertoadd, $includesubcategories, $tagids);
-    quiz_delete_previews($quiz);
-    quiz_update_sumgrades($quiz);
-    redirect($returnurl);
 }
+// +++
 
 $mform->set_data(array(
     'addonpage' => $addonpage,
@@ -136,5 +211,11 @@ if (!$quizname = $DB->get_field($cm->modname, 'name', array('id' => $cm->instanc
 
 echo $OUTPUT->heading(get_string('addrandomquestiontoquiz', 'quiz', $quizname), 2);
 $mform->display();
-echo $OUTPUT->footer();
 
+//  Demanda ( Questoes aleatorias ){
+//  Responsavel por alterar a quantidade de questoes de acordo com a categoria escolhida
+    // quiz_add_random_form::call_js($CFG->wwwroot, $PAGE->url);
+    // $PAGE->requer->js_call_amd('http://localhost/moodle35/mod/quiz/my-file.js');
+//  }
+
+echo $OUTPUT->footer();

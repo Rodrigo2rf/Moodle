@@ -159,7 +159,8 @@ function quiz_create_attempt(quiz $quizobj, $attemptnumber, $lastattempt, $timen
  * @return object   modified attempt object
  */
 function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow,
-                                $questionids = array(), $forcedvariantsbyslot = array()) {
+                                $questionids = array(), $forcedvariantsbyslot = array(), $idquestions = null) {
+    // Demanda ( Questionario aleatorio ) - Adicionado o '$idquestions = null' como parametros
 
     // Usages for this user's previous quiz attempts.
     $qubaids = new \mod_quiz\question\qubaids_for_users_attempts(
@@ -202,37 +203,51 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
         }
         $randomloader = new \core_question\bank\random_question_loader($qubaids, $usedquestionids);
 
-        foreach ($quizobj->get_questions() as $questiondata) {
-            $slot += 1;
-            if ($questiondata->qtype != 'random') {
-                continue;
-            }
-
-            $tagids = quiz_retrieve_slot_tag_ids($questiondata->slotid);
-
-            // Deal with fixed random choices for testing.
-            if (isset($questionids[$quba->next_slot_number()])) {
-                if ($randomloader->is_question_available($questiondata->category,
-                        (bool) $questiondata->questiontext, $questionids[$quba->next_slot_number()], $tagids)) {
-                    $questions[$slot] = question_bank::load_question(
-                            $questionids[$quba->next_slot_number()], $quizobj->get_quiz()->shuffleanswers);
-                    continue;
-                } else {
-                    throw new coding_exception('Forced question id not available.');
+        //  Demanda ( Questionario aleatorio ){
+            if( $idquestions != null ){
+                foreach ($idquestions as $idq) {
+                    $slot += 1;
+                    $questions[$slot] = question_bank::load_question($idq, $quizobj->get_quiz()->shuffleanswers);
                 }
-            }
+            }else{
+        //  }
+                foreach ($quizobj->get_questions() as $questiondata) {
+                    $slot += 1;
+                    if ($questiondata->qtype != 'random') {
+                        continue;
+                    }
 
-            // Normal case, pick one at random.
-            $questionid = $randomloader->get_next_question_id($questiondata->randomfromcategory,
-                    $questiondata->randomincludingsubcategories, $tagids);
-            if ($questionid === null) {
-                throw new moodle_exception('notenoughrandomquestions', 'quiz',
-                                           $quizobj->view_url(), $questiondata);
-            }
+                    $tagids = quiz_retrieve_slot_tag_ids($questiondata->slotid);
 
-            $questions[$slot] = question_bank::load_question($questionid,
-                    $quizobj->get_quiz()->shuffleanswers);
-        }
+                    // Deal with fixed random choices for testing.
+                    if (isset($questionids[$quba->next_slot_number()])) {
+                        if ($randomloader->is_question_available($questiondata->category,
+                                (bool) $questiondata->questiontext, $questionids[$quba->next_slot_number()], $tagids)) {
+                            $questions[$slot] = question_bank::load_question(
+                                    $questionids[$quba->next_slot_number()], $quizobj->get_quiz()->shuffleanswers);
+                            continue;
+                        } else {
+                            throw new coding_exception('Forced question id not available.');
+                        }
+                    }
+
+                    // Normal case, pick one at random.
+                    // $questionid = $randomloader->get_next_question_id($questiondata->randomfromcategory, $questiondata->randomincludingsubcategories, $tagids);
+                    // Demanda ( Questionario Aleatorio ){
+                    $questionid = $randomloader->get_next_question_id($questiondata->randomfromcategory, $questiondata->randomincludingsubcategories, $tagids, $questiondata->nivel, $questiondata->validada);
+                    // }
+
+                    if ($questionid === null) {
+                        throw new moodle_exception('notenoughrandomquestions', 'quiz',
+                                                $quizobj->view_url(), $questiondata);
+                    }
+
+                    $questions[$slot] = question_bank::load_question($questionid,
+                            $quizobj->get_quiz()->shuffleanswers);
+                }
+            //  Demanda ( Questionario aleatorio ){
+            }
+            //  }
     }
 
     // Finally add them all to the usage.
@@ -2275,6 +2290,115 @@ function quiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
 }
 
 /**
+ * Demanda ( Questoes aleatorias ){
+ * Adicionar questoes de acordo com a quantidade e nivel selecionado
+ * @param object $quiz the quiz settings.
+ * @param int $addonpage the page on which to add the question.
+ * @param int $categoryid the question category to add the question from.
+ * @param int $number the number of random questions to add.
+ * @param bool $includesubcategories whether to include questoins from subcategories.
+ */
+function quiz_add_random_questions_by_specific_level($quiz, $addonpage, $categoryid, $number,  $includesubcategories, $numberofeasy, $numberofmedium, $numberofhard, $tagids = []) {
+        
+    global $DB;
+
+    $cat = array();
+    $return = $DB->get_records_sql(
+        "SELECT id FROM mdl_question_categories WHERE parent = $categoryid OR id = $categoryid ORDER BY id ASC"
+    );
+
+    if(sizeof($return) > 1){
+        $includesubcategories = true;
+    }
+
+    foreach ($return as $value) {
+        $cat[$value->id] = $value->id;
+    }
+
+    $keys = array_keys($cat);
+    $ids = implode(", ",$keys);
+
+    $category = $DB->get_record('question_categories', array('id' => $categoryid));
+    if (!$category) {
+        print_error('invalidcategoryid', 'error');
+    }
+
+    $catcontext = context::instance_by_id($category->contextid);
+    require_capability('moodle/question:useall', $catcontext);
+
+    $tags = \core_tag_tag::get_bulk($tagids, 'id, name');
+    $tagstrings = [];
+    foreach ($tags as $tag) {
+        $tagstrings[] = "{$tag->id},{$tag->name}";
+    }
+
+    // Find existing random questions in this category that are
+    // not used by any quiz.
+    if ($existingquestions = $DB->get_records_sql(
+            "SELECT q.id, q.qtype FROM {question} q
+            WHERE qtype = 'random'
+                AND category IN ($ids)
+                AND " . $DB->sql_compare_text('questiontext') . " = ?
+                AND NOT EXISTS (
+                        SELECT *
+                        FROM {quiz_slots}
+                        WHERE questionid = q.id)
+            ORDER BY id", array($category->id, ($includesubcategories ? '1' : '0')))) {
+            // Take as many of these as needed.
+        while (($existingquestion = array_shift($existingquestions)) && $number > 0) {
+            echo "oi";
+            //quiz_add_quiz_question($question->id, $quiz, $addonpage);
+            $number -= 1;
+        }
+    }
+
+    if ($number <= 0) {
+        return;
+    }
+
+    // Criando as perguntas aleatorias
+    $questoes_por_nivel = array( $numberofeasy, $numberofmedium, $numberofhard);
+    for($i = 0; $i < count($questoes_por_nivel); $i++){
+        for($x = 0; $x < $questoes_por_nivel[$i]; $x++){
+            $form = new stdClass();
+            $form->category = $category->id . ',' . $category->contextid;
+            if($includesubcategories == true){
+                $form->questiontext = array('text' => '1', 'format' => 0);
+            }else{
+                $form->questiontext = array('text' => '0', 'format' => 0);
+            }
+            $form->fromtags = $tagstrings;
+            $form->defaultmark = 1;
+            $form->hidden = 1;
+            $form->includesubcategories = $includesubcategories;
+            $form->stamp = make_unique_id_code(); // Set the unique code (not to be changed).
+            $question = new stdClass();
+            $question->qtype = 'random';
+            $question->nivel = 1 + $i;
+            $question->validada = 1;
+            $question = question_bank::get_qtype('random')->save_question($question, $form);
+            if (!isset($question->id)) {
+                print_error('cannotinsertrandomquestion', 'quiz');
+            }
+            // quiz_add_quiz_question($question->id, $quiz, $addonpage);
+
+            $randomslotdata = new stdClass();
+            $randomslotdata->quizid = $quiz->id;
+            $randomslotdata->questionid = $question->id;
+            $randomslotdata->questioncategoryid = $categoryid;
+            $randomslotdata->includingsubcategories = $includesubcategories ? 1 : 0;
+            $randomslotdata->maxmark = 1;
+    
+            $randomslot = new \mod_quiz\local\structure\slot_random($randomslotdata);
+            $randomslot->set_quiz($quiz);
+            $randomslot->set_tags($tags);
+            $randomslot->insert($addonpage);
+        }
+    }
+}
+//  }
+
+/**
  * Mark the activity completed (if required) and trigger the course_module_viewed event.
  *
  * @param  stdClass $quiz       quiz object
@@ -2407,11 +2531,38 @@ function quiz_prepare_and_start_new_attempt(quiz $quizobj, $attemptnumber, $last
     $timenow = time(); // Update time now, in case the server is running really slowly.
     $attempt = quiz_create_attempt($quizobj, $attemptnumber, $lastattempt, $timenow, $quizobj->is_preview_user());
 
-    if (!($quizobj->get_quiz()->attemptonlast && $lastattempt)) {
-        $attempt = quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow);
-    } else {
-        $attempt = quiz_start_attempt_built_on_last($quba, $attempt, $lastattempt);
-    }
+    // Demanda ( Questionario aleatorio ){
+    // verifica se o questionario é do tipo random
+        $quizobj->preload_questions();
+        $quizobj->load_questions();
+
+        $randomfound = false;
+
+        foreach ($quizobj->get_questions() as $questiondata) {
+            if ($questiondata->qtype == 'random') {
+                $randomfound = true;
+                continue;
+            }
+        }
+
+        if( $attemptnumber > 1 && $randomfound == true ){
+            $idquestions = quiz_start_attempt_with_same_questions($quba, $attempt, $lastattempt);
+            $attempt = quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow, null, null, $idquestions);
+        }else{
+            if (!($quizobj->get_quiz()->attemptonlast && $lastattempt)) {
+                $idquestions = quiz_start_attempt_with_same_questions($quba, $attempt, $lastattempt);
+                $attempt = quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow, null, null, $idquestions);
+            } else { echo "2"; exit;
+                $attempt = quiz_start_attempt_built_on_last($quba, $attempt, $lastattempt);
+            }
+        }
+    // }
+
+    // if (!($quizobj->get_quiz()->attemptonlast && $lastattempt)) {
+    //     $attempt = quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow);
+    // } else {
+    //     $attempt = quiz_start_attempt_built_on_last($quba, $attempt, $lastattempt);
+    // }
 
     $transaction = $DB->start_delegated_transaction();
 
@@ -2596,3 +2747,26 @@ function quiz_create_attempt_handling_errors($attemptid, $cmid = null) {
         return $attempobj;
     }
 }
+
+/**
+ * Demanda ( Questoes aleatorias ){
+ * Start a question with same questions
+ * @param question_usage_by_activity    $quba         this question usage
+ * @param object                        $attempt      this attempt
+ * @param object                        $lastattempt  last attempt
+ * @return questions                    modified attempt object
+ *
+ */
+function quiz_start_attempt_with_same_questions($quba, $attempt, $lastattempt = null ) {
+    $id_questions = null;
+    if($lastattempt != null){
+        $oldquba = question_engine::load_questions_usage_by_activity($lastattempt->uniqueid);
+
+        foreach ($oldquba->get_attempt_iterator() as $oldslot => $oldqa) {
+            $question = $oldqa->get_question();
+            $id_questions[] = $question->id;
+        }
+    }
+    return $id_questions;
+}
+//  }

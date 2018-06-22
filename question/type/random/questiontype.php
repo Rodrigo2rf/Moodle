@@ -281,6 +281,11 @@ class qtype_random extends question_type {
      *      selected, or null if no suitable question could be found.
      */
     public function choose_other_question($questiondata, $excludedquestions, $allowshuffle = true, $forcequestionid = null) {
+
+        // Demanda ( Questoes aleatorias ){
+            global $DB;
+        // }
+
         $available = $this->get_available_questions_from_category($questiondata->category,
                 !empty($questiondata->questiontext));
         shuffle($available);
@@ -300,9 +305,31 @@ class qtype_random extends question_type {
                 continue;
             }
 
-            $question = question_bank::load_question($questionid, $allowshuffle);
-            $this->set_selected_question_name($question, $questiondata->name);
-            return $question;
+            // $question = question_bank::load_question($questionid, $allowshuffle);
+            // $this->set_selected_question_name($question, $questiondata->name);
+            // return $question;
+
+            // Demanda ( Questoes aleatorias ){
+                // Questao selecionada aleatóriamente com nivel escolhido pelo administrador
+                $quest = $DB->get_record('question', array('id' => $questionid));
+
+                if( $quest->nivel == $questiondata->nivel ){
+
+                    $question = question_bank::load_question($questionid, $allowshuffle); 
+                    $this->set_selected_question_name($question, $questiondata->name);  
+                    return $question;
+
+                }
+
+                // Questao selecionada aleatóriamente sem escolher os niveis
+                if(empty($questiondata->nivel)){
+
+                    $question = question_bank::load_question($questionid, $allowshuffle); 
+                    $this->set_selected_question_name($question, $questiondata->name);  
+                    return $question;
+
+                }
+            // }
         }
         return null;
     }

@@ -45,6 +45,50 @@ class quiz_add_random_form extends moodleform {
         $contexts = $this->_customdata['contexts'];
         $usablecontexts = $contexts->having_cap('moodle/question:useall');
 
+        //  Demanda ( Questoes aleatorias ){
+            // Gerar aleatoriamente as questões, com a opção de escolher a quantidade de questões por nivel
+            $mform->addElement('header', 'categoryheader', 'Adicionar questões randômicas por classificação.');
+
+            // Tratamento para resgatar a categoria das questões
+            $categoryQuestion = $this->_customdata['cat'];
+            $categoryQuestionParent = $categoryQuestion;
+
+            // Verifica se a categoria foi passada pela url e adiciona na variavel $categoryQuestion
+            if(!empty(optional_param('idCategory', 0, PARAM_INT))){
+                $categoryQuestion = optional_param('idCategory', 0, PARAM_INT);
+            }
+
+            $mform->addElement('questioncategory', 'activitySelector', get_string('category'), array('contexts' => $usablecontexts, 'top' => false ));
+            $mform->setDefault('activitySelector', $categoryQuestion);
+
+            // texto informativo
+            $string = $this->qtd_questoes(NULL, $categoryQuestion);
+            $qtd = end( $string );
+            if( $qtd > 0 ){ 
+                $str = 'Quantidade de questões disponíveis'; 
+            }else{
+                $str = 'Nenhuma questão disponíveis';
+            }
+            $mform->addElement('html', html_writer::tag('h5', $str, array('id' => 'qtd_questoes_disponiveis')));
+
+            // Select para exibir todas as categorias
+            $categoriasDisponiveis = $this->pegar_categoria_geral($categoryQuestionParent);
+
+            // Necessario para criar a url de retorno 
+            $mform->addElement('hidden', 'idcategoryparent', $categoryQuestionParent);
+            $mform->setType('idcategoryparent', PARAM_TEXT);
+
+            $cmid = optional_param('cmid', 0, PARAM_INT);
+            $mform->addElement('hidden', 'cmid', $cmid, array('id' => 'cmid'));
+            $mform->setType('cmid', PARAM_INT);
+
+            $mform->addElement('select','numberofeasy','Quantidade de questões fáceis',$this->qtd_questoes(1,$categoryQuestion));
+            $mform->addElement('select','numberofmedium','Quantidade de questões medianas',$this->qtd_questoes(2,$categoryQuestion));
+            $mform->addElement('select','numberofhard','Quantidade de questões difíceis',$this->qtd_questoes(3,$categoryQuestion));
+
+            $mform->addElement('submit','randomquestionybylevel', 'Adicionar questões aleatórias por nível');
+        //  }
+
         // Random from existing category section.
         $mform->addElement('header', 'existingcategoryheader',
                 get_string('randomfromexistingcategory', 'quiz'));
@@ -136,4 +180,118 @@ class quiz_add_random_form extends moodleform {
         }
         return $randomcount;
     }
+
+
+    //  Demanda ( Questoes aleatorias ){
+        /**
+         * Recebe o id da categoria e o nivel
+         * @return retorna o numero de questoes cadastradas, incluindo as sub-categorias 
+         *
+         */
+        private function qtd_questoes($nivel, $categoryQuestion){
+
+            global $DB;
+
+            $categoryQuestion = explode(',',$categoryQuestion);
+            $categoryQuestion = $categoryQuestion[0];
+
+            $result = $this->pegar_categoria_especifica($categoryQuestion);
+
+            $keys = array_keys($result);
+            $key = implode(",",$keys);
+
+            if($nivel == null){
+                $nivel = 'q.nivel IS NOT NULL';
+            }else{
+                $nivel = 'q.nivel = ' . $nivel;
+            }
+
+            $count = $DB->count_records_sql(
+                "SELECT count(*) FROM mdl_question AS q 
+                INNER JOIN mdl_question_categories AS qc on q.category = qc.id
+                WHERE q.category IN ($key) AND $nivel AND q.validada = 1 AND q.qtype != 'random'" 
+            );
+
+            $arrayNivel = array();
+            for($c = 0; $c <= $count; $c++){
+                array_push($arrayNivel, $c);
+            }
+
+            return $arrayNivel;
+
+        }
+
+        /**
+         * Recebe o id da categoria
+         * @return retorna todas as categorias associadas a categoria indicada
+         */
+        private function pegar_categoria_geral($categoryQuestion){
+        
+            global $DB;
+
+            $categoryQuestion = explode(',',$categoryQuestion);
+            $categoryQuestion = $categoryQuestion[0];
+
+            $return = $DB->get_records_sql(
+                "SELECT id, contextid, name FROM mdl_question_categories WHERE parent = $categoryQuestion OR id = $categoryQuestion ORDER BY id ASC"
+            );
+
+            $categoria = array();
+            foreach ($return as $value) {
+                $categoria[$value->id . "," .$value->contextid] = $value->name;
+            }
+
+            return $categoria; 
+        }
+
+        /**
+         * Recebe o id da categoria
+         * @return retorna todas as categorias associadas a categoria indicada
+         */
+        private function pegar_categoria_especifica($categoryQuestion, $newArray = true){
+        
+            global $DB;
+            global $cat_esp;
+
+            $categoryQuestion = explode(',',$categoryQuestion);
+            $categoryQuestion = $categoryQuestion[0];
+
+            $return = $DB->get_records_sql(
+                "SELECT id, name, parent FROM mdl_question_categories 
+                WHERE parent IN ( SELECT id
+                FROM mdl_question_categories 
+                WHERE parent = $categoryQuestion OR id = $categoryQuestion ) OR id = $categoryQuestion"
+            );
+
+            foreach ($return as $value) {
+                $cat_esp[$value->id] = $value->name;
+            }
+
+            return $cat_esp; 
+
+        }
+
+        /**
+         * Recebe a url do localhost e a url da pagina
+         * Ao alterar o campo select o usuário é redirecionado para outra pagina para configuracao do questionario aleatorio
+         */
+        // static function call_js($url,$urlpage){
+        //     echo "<script type='text/javascript'> 
+        //             //<![CDATA[ 
+        //                 var activities = document.getElementById('id_activitySelector');
+        //                 activities.addEventListener('change', function() { 
+        //                     var cmid = document.getElementById('cmid').value;
+        //                     var idCategoria = this.value; 
+        //                     window.location.href = 'addrandom.php?returnurl={$url}/mod/quiz/edit.php?cmid='+cmid+'&amp;data-addonpage=0&cmid='+cmid+'&appendqnumstring=addarandomquestion&idCategory='+idCategoria;
+        //                 });
+
+        //                 var urlPagina = document.URL;
+        //                 var idPagina = urlPagina.lastIndexOf('='); 
+        //                 document.getElementById('id_category').value = urlPagina.substring(idPagina+1);
+
+        //             //]] 
+        //         </script> 
+        //     ";
+        // }
+    //  }
 }
