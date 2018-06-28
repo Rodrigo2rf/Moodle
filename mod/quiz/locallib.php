@@ -2557,7 +2557,6 @@ function quiz_prepare_and_start_new_attempt(quiz $quizobj, $attemptnumber, $last
             }
         }
     // }
-
     // if (!($quizobj->get_quiz()->attemptonlast && $lastattempt)) {
     //     $attempt = quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $timenow);
     // } else {

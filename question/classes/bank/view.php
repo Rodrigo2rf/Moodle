@@ -967,7 +967,133 @@ class view {
         $this->searchconditions[] = $searchcondition;
     }
 
-    //  Demanda ( Questoes aleatorias ){
+    //  Demanda ( Questoes aleatorias ) +++
+    //  Exibir dados quantitativos das questoes (validadas, nao validadas, aprovadas, nao aprovadas)
+    protected function show_review_questions(){
+
+        global $DB, $PAGE;
+
+        $courseid = $PAGE->course->id;
+
+        $params = "";
+        foreach ($this->sqlparams as $key => $value) {
+            $params .= $value . ',';
+        }
+
+        $params = rtrim($params , ',');
+
+        $sql_get_questions = "SELECT q.id, q.nivel, q.validada, q.observacao FROM mdl_course c
+        INNER JOIN mdl_context cxt ON cxt.instanceid = c.id
+        INNER JOIN mdl_question_categories qc ON qc.contextid = cxt.id
+        INNER JOIN mdl_question q ON q.category = qc.id
+        WHERE c.id = {$courseid} AND q.qtype != 'random'";
+
+        $sql_get_questions = $sql_get_questions . " AND q.category IN ({$params})";
+
+        $result = $DB->get_records_sql($sql_get_questions);
+
+        $total = 0;
+        $aprovadas = 0;
+        $reprovadas = 0;
+        foreach ($result as $key => $value) {
+            if( $value->validada == 1  ){
+                $aprovadas++;
+            }
+            if ( $value->validada == 2 ){
+                $reprovadas++;
+            }
+            $total++;
+        }
+
+        echo '<div class="infoadministrator">';
+        echo get_string('qtdquest', 'moodle') . $total . '<br>';
+            if( $aprovadas + $reprovadas == 0 ){
+                echo get_string('nquesteditada', 'moodle') . '<br>';
+            }else{
+                echo get_string('qtdquestvalidadas', 'moodle') . ( $aprovadas + $reprovadas ) . '<br>';
+            }
+            if($aprovadas >= 1){
+                echo get_string('qtdquestaprovadas', 'moodle') . $aprovadas . '<br>';
+            }
+            if($reprovadas >= 1){
+                echo get_string('qtdquestnaoaprovadas', 'moodle') . $reprovadas . '<br>';
+            }
+        echo '</div>';
+        
+    }
+
+    // Metodo customizado para exibir apenas questoes aprovadas
+    protected function display_question_list_only_approved($contexts, $pageurl, $categoryandcontext,
+            $cm = null, $recurse=1, $page=0, $perpage=100, $showhidden=false,
+            $showquestiontext = false, $addcontexts = array()) {
+        global $CFG, $DB, $OUTPUT;
+
+        $category = $this->get_current_category($categoryandcontext);
+
+        $strselectall = get_string('selectall');
+        $strselectnone = get_string('deselectall');
+
+        list($categoryid, $contextid) = explode(',', $categoryandcontext);
+        $catcontext = \context::instance_by_id($contextid);
+
+        $canadd = has_capability('moodle/question:add', $catcontext);
+
+        $this->create_new_question_form($category, $canadd);
+
+        $this->build_query();
+        $totalnumber = $this->get_question_count();
+        if ($totalnumber == 0) {
+            return;
+        }
+        $questions = $this->load_page_questions_only_approved($page, $perpage);
+
+        echo '<div class="categorypagingbarcontainer">';
+        $pageingurl = new \moodle_url('edit.php');
+        $r = $pageingurl->params($pageurl->params());
+        $pagingbar = new \paging_bar($totalnumber, $page, $perpage, $pageingurl);
+        $pagingbar->pagevar = 'qpage';
+        echo $OUTPUT->render($pagingbar);
+        echo '</div>';
+
+        echo '<form method="post" action="edit.php">';
+        echo '<fieldset class="invisiblefieldset" style="display: block;">';
+        echo '<input type="hidden" name="sesskey" value="'.sesskey().'" />';
+        echo \html_writer::input_hidden_params($this->baseurl);
+
+        echo '<div class="categoryquestionscontainer">';
+        echo 'Aqui serão exibidas somente as questões que foram aprovadas pelo Professor/Tutor.';
+        $this->start_table();
+        $rowcount = 0;
+        foreach ($questions as $question) {
+            $this->print_table_row($question, $rowcount);
+            $rowcount += 1;
+        }
+        $this->end_table();
+        echo "</div>\n";
+
+        echo '<div class="categorypagingbarcontainer pagingbottom">';
+        echo $OUTPUT->render($pagingbar);
+        if ($totalnumber > DEFAULT_QUESTIONS_PER_PAGE) {
+            if ($perpage == DEFAULT_QUESTIONS_PER_PAGE) {
+                $url = new \moodle_url('edit.php', array_merge($pageurl->params(), array('qperpage' => 1000)));
+                $showall = '<a href="'.$url.'">'.get_string('showall', 'moodle', $totalnumber).'</a>';
+            } else {
+                $url = new \moodle_url('edit.php', array_merge($pageurl->params(),
+                                              array('qperpage' => DEFAULT_QUESTIONS_PER_PAGE)));
+                $showall = '<a href="'.$url.'">'.get_string('showperpage', 'moodle', DEFAULT_QUESTIONS_PER_PAGE).'</a>';
+            }
+            echo "<div class='paging'>{$showall}</div>";
+        }
+        echo '</div>';
+
+        $this->display_bottom_controls($totalnumber, $recurse, $category, $catcontext, $addcontexts);
+
+        echo '</fieldset>';
+        echo "</form>\n";
+    }
+
+
+
         /**
          * Prepara link para a pagina de editar questao
          */

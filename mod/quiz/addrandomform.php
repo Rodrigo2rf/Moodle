@@ -273,14 +273,7 @@ class quiz_add_random_form extends moodleform {
             return $cat_esp; 
 
         }
-        
-
-        //  http://localhost/moodle35/mod/quiz/addrandom.php?returnurl=
-        //  http://localhost/moodle35/mod/quiz/addrandom.php?returnurl=
-        //  http://localhost/moodle35/mod/quiz/edit.php?cmid=22
-        //  &amp;data-addonpage=0&cmid=22&appendqnumstring=addarandomquestion&idCategory=6,3
-        //  &amp;data-addonpage=0&cmid=22&appendqnumstring=addarandomquestion&idCategory=4,21
-
+ 
     /**
      * Recebe a url do localhost e a url da pagina
      * Ao alterar o campo select o usuário é redirecionado para outra pagina para configuracao do questionario aleatorio
