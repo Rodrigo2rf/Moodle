@@ -1356,12 +1356,14 @@ function question_make_default_categories($contexts) {
  * @param bool $top Whether to return the top categories or not.
  * @return array of category objects.
  */
+//  Demanda (questoes aleatorias)
+//  Adicionado o campo validada ao select - 'AND q.validada = 1'
 function get_categories_for_contexts($contexts, $sortorder = 'parent, sortorder, name ASC', $top = false) {
     global $DB;
     $topwhere = $top ? '' : 'AND c.parent <> 0';
     return $DB->get_records_sql("
             SELECT c.*, (SELECT count(1) FROM {question} q
-                        WHERE c.id = q.category AND q.hidden='0' AND q.parent='0') AS questioncount
+                        WHERE c.id = q.category AND q.hidden='0' AND q.parent='0' AND q.validada = 1) AS questioncount
               FROM {question_categories} c
              WHERE c.contextid IN ($contexts) $topwhere
           ORDER BY $sortorder");

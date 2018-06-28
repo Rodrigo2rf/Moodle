@@ -967,7 +967,7 @@ class view {
         $this->searchconditions[] = $searchcondition;
     }
 
-    // Demanda ( Questoes aleatorias ){
+    //  Demanda ( Questoes aleatorias ){
         /**
          * Prepara link para a pagina de editar questao
          */
@@ -977,9 +977,6 @@ class view {
             }else{
                 return "edit_validate_question.php?returnurl=%2Fquestion%2Fedit_validate_question.php?courseid%3D".$courseid."&courseid=".$courseid."&id=".$questionid."".$this->completar_link("cat",$category)."".$this->completar_link("qpage",$qpage);  
             }
-
-            // http://localhost/moodle35/question/question.php?returnurl=%2Fquestion%2Fedit.php%3Fcourseid%3D2&courseid=2&id=1
-            // http://localhost/moodle35/question/question.php?returnurl=%2Fquestion%2Fedit.php%3Fcourseid%3D2&courseid=2&id=1  
         }
     
         public function completar_link($tipo, $valor){
@@ -987,6 +984,46 @@ class view {
                 return "&".$tipo."=".$valor;
             }
         }
-    // }
-    
+
+        // Metodo customizado para exibir apenas questoes aprovadas
+        protected function load_page_questions_only_approved($page, $perpage) {
+            global $DB;
+
+            $sqlCreate = explode("ORDER BY", $this->loadsql);
+            $sqlCreate[0] .= "AND q.validada = 1 ORDER BY";
+            $sql = $sqlCreate[0] ." ". $sqlCreate[1]; 
+
+            $questions = $DB->get_recordset_sql($sql, $this->sqlparams, $page * $perpage, $perpage);
+
+            if (!$questions->valid()) {
+                // No questions on this page. Reset to page 0.
+                $questions = $DB->get_recordset_sql($sql, $this->sqlparams, 0, $perpage);
+            }
+            return $questions;
+        }
+
+        /**
+         * Metodo customizado para exibir apenas questoes aprovadas
+         */
+        public function display_only_approved($tabname, $page, $perpage, $cat, $recurse, $showhidden, $showquestiontext) {
+            global $PAGE, $OUTPUT;
+
+            if ($this->process_actions_needing_ui()) {
+                return;
+            }
+            $editcontexts = $this->contexts->having_one_edit_tab_cap($tabname);
+            // Category selection form.
+            echo $OUTPUT->heading(get_string('questionbank', 'question'), 2);
+            array_unshift($this->searchconditions, new \core_question\bank\search\hidden_condition(!$showhidden));
+            array_unshift($this->searchconditions, new \core_question\bank\search\category_condition(
+                    $cat, $recurse, $editcontexts, $this->baseurl, $this->course));
+            $this->display_options_form($showquestiontext);
+
+            // Continues with list of questions.
+            $this->display_question_list_only_approved($this->contexts->having_one_edit_tab_cap($tabname),
+                    $this->baseurl, $cat, $this->cm,
+                    null, $page, $perpage, $showhidden, $showquestiontext,
+                    $this->contexts->having_cap('moodle/question:add'));
+        }
+    //  }    
 }

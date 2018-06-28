@@ -785,7 +785,7 @@ class quiz_statistics_report extends quiz_default_report {
                 get_string('recalculatenow', 'quiz_statistics'));
         $output .= $OUTPUT->box_end(true);
 
-        return $output;
+        // return $output;
     }
 
     /**

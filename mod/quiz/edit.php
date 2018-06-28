@@ -214,9 +214,7 @@ echo $output->edit_page($quizobj, $structure, $contexts, $thispageurl, $pagevars
 echo html_writer::end_tag('div');
 
 //  Demanda ( Questoes aleatorias ){
-//  Responsavel por alterar a quantidade de questoes de acordo com a categoria escolhida
-    // quiz_add_random_form::call_js($CFG->wwwroot, $PAGE->url);
-    // $PAGE->requires->js('/mod/quiz/my-file.js');
+    quiz_add_random_form::call_js();
 //  }
 
 echo $OUTPUT->footer();

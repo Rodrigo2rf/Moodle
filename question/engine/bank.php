@@ -513,11 +513,21 @@ class question_finder implements cache_data_source {
             $extraconditions = ' AND (' . $extraconditions . ')';
         }
 
-        return $DB->get_records_select_menu('question',
+        // return $DB->get_records_select_menu('question',
+        //      "category {$qcsql}
+        //      AND parent = 0
+        //      AND hidden = 0
+        //      {$extraconditions}", $qcparams + $extraparams, '', 'id,id AS id2');
+        
+        //  Demanda ( Questoes aleatorias ){
+        //  adicionado o campo validada para retorna apenas as questoes validadas
+            return $DB->get_records_select_menu('question',
                 "category {$qcsql}
+                 AND validada = 1
                  AND parent = 0
                  AND hidden = 0
                  {$extraconditions}", $qcparams + $extraparams, '', 'id,id AS id2');
+        //  }
     }
 
     /**
@@ -553,6 +563,8 @@ class question_finder implements cache_data_source {
      * @param array $tagids an array of tag ids
      * @return array questionid => count of number of previous uses.
      */
+    //  Demanda (questoes aleatorias)
+    //  Adicionado o campo validada ao select - 'AND q.validada = 1'
     public function get_questions_from_categories_and_tags_with_usage_counts($categoryids,
             qubaid_condition $qubaids, $extraconditions = '', $extraparams = array(), $tagids = array()) {
         global $DB;
@@ -566,6 +578,7 @@ class question_finder implements cache_data_source {
         $from   = "{question} q";
         $where  = "q.category {$qcsql}
                AND q.parent = 0
+               AND q.validada = 1
                AND q.hidden = 0";
         $params = $qcparams;
 

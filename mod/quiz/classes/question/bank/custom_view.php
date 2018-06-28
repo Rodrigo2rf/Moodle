@@ -138,14 +138,24 @@ class custom_view extends \core_question\bank\view {
      *
      * @return string HTML code for the form
      */
-    public function render($tabname, $page, $perpage, $cat, $recurse, $showhidden,
-            $showquestiontext, $tagids = []) {
-        ob_start();
-        $this->display($tabname, $page, $perpage, $cat, $recurse, $showhidden, $showquestiontext, $tagids);
-        $out = ob_get_contents();
-        ob_end_clean();
-        return $out;
-    }
+    // public function render($tabname, $page, $perpage, $cat, $recurse, $showhidden,
+    //         $showquestiontext, $tagids = []) {
+    //     ob_start();
+    //     $this->display($tabname, $page, $perpage, $cat, $recurse, $showhidden, $showquestiontext, $tagids);
+    //     $out = ob_get_contents();
+    //     ob_end_clean();
+    //     return $out;
+    // }
+    // Demanda ( Questoes aleatorias ){
+    // Chama o metodo display_only_approved (Metodo que exibira na tela apenas as questoes aprovadas)
+        public function render($tabname, $page, $perpage, $cat, $recurse, $showhidden, $showquestiontext) {
+            ob_start();
+            $this->display_only_approved($tabname, $page, $perpage, $cat, $recurse, $showhidden, $showquestiontext);
+            $out = ob_get_contents();
+            ob_end_clean();
+            return $out;
+        }
+    //  }
 
     /**
      * Display the controls at the bottom of the list of questions.

@@ -64,12 +64,6 @@ class quiz_add_random_form extends moodleform {
             // texto informativo
             $string = $this->qtd_questoes(NULL, $categoryQuestion);
             $qtd = end( $string );
-            if( $qtd > 0 ){ 
-                $str = 'Quantidade de questões disponíveis'; 
-            }else{
-                $str = 'Nenhuma questão disponíveis';
-            }
-            $mform->addElement('html', html_writer::tag('h5', $str, array('id' => 'qtd_questoes_disponiveis')));
 
             // Select para exibir todas as categorias
             $categoriasDisponiveis = $this->pegar_categoria_geral($categoryQuestionParent);
@@ -82,11 +76,19 @@ class quiz_add_random_form extends moodleform {
             $mform->addElement('hidden', 'cmid', $cmid, array('id' => 'cmid'));
             $mform->setType('cmid', PARAM_INT);
 
-            $mform->addElement('select','numberofeasy','Quantidade de questões fáceis',$this->qtd_questoes(1,$categoryQuestion));
-            $mform->addElement('select','numberofmedium','Quantidade de questões medianas',$this->qtd_questoes(2,$categoryQuestion));
-            $mform->addElement('select','numberofhard','Quantidade de questões difíceis',$this->qtd_questoes(3,$categoryQuestion));
+            if( $qtd > 0 ){ 
 
-            $mform->addElement('submit','randomquestionybylevel', 'Adicionar questões aleatórias por nível');
+                $mform->addElement('html', html_writer::tag('h5', 'Questões disponíveis', array('id' => 'qtd_questoes_disponiveis')));
+
+                $mform->addElement('select','numberofeasy','Quantidade de questões fáceis',$this->qtd_questoes(1,$categoryQuestion));
+                $mform->addElement('select','numberofmedium','Quantidade de questões medianas',$this->qtd_questoes(2,$categoryQuestion));
+                $mform->addElement('select','numberofhard','Quantidade de questões difíceis',$this->qtd_questoes(3,$categoryQuestion));
+
+                $mform->addElement('submit','randomquestionybylevel', 'Adicionar questões aleatórias por nível');
+
+            }else{
+                $mform->addElement('html', html_writer::tag('h5', 'Nenhuma questão disponíveis', array('id' => 'qtd_questoes_disponiveis')));
+            }
         //  }
 
         // Random from existing category section.
@@ -153,6 +155,7 @@ class quiz_add_random_form extends moodleform {
             $contexts->lowest()->id,
             $tops
         ]);
+
     }
 
     public function validation($fromform, $files) {
@@ -270,28 +273,52 @@ class quiz_add_random_form extends moodleform {
             return $cat_esp; 
 
         }
+        
 
-        /**
-         * Recebe a url do localhost e a url da pagina
-         * Ao alterar o campo select o usuário é redirecionado para outra pagina para configuracao do questionario aleatorio
-         */
-        // static function call_js($url,$urlpage){
-        //     echo "<script type='text/javascript'> 
-        //             //<![CDATA[ 
-        //                 var activities = document.getElementById('id_activitySelector');
-        //                 activities.addEventListener('change', function() { 
-        //                     var cmid = document.getElementById('cmid').value;
-        //                     var idCategoria = this.value; 
-        //                     window.location.href = 'addrandom.php?returnurl={$url}/mod/quiz/edit.php?cmid='+cmid+'&amp;data-addonpage=0&cmid='+cmid+'&appendqnumstring=addarandomquestion&idCategory='+idCategoria;
-        //                 });
+        //  http://localhost/moodle35/mod/quiz/addrandom.php?returnurl=
+        //  http://localhost/moodle35/mod/quiz/addrandom.php?returnurl=
+        //  http://localhost/moodle35/mod/quiz/edit.php?cmid=22
+        //  &amp;data-addonpage=0&cmid=22&appendqnumstring=addarandomquestion&idCategory=6,3
+        //  &amp;data-addonpage=0&cmid=22&appendqnumstring=addarandomquestion&idCategory=4,21
 
-        //                 var urlPagina = document.URL;
-        //                 var idPagina = urlPagina.lastIndexOf('='); 
-        //                 document.getElementById('id_category').value = urlPagina.substring(idPagina+1);
-
-        //             //]] 
-        //         </script> 
-        //     ";
-        // }
+    /**
+     * Recebe a url do localhost e a url da pagina
+     * Ao alterar o campo select o usuário é redirecionado para outra pagina para configuracao do questionario aleatorio
+     */
+        static function call_js(){   
+            echo "<script type='text/javascript'> 
+                    window.onload = function() {
+                        var menu = document.getElementById('actionmenuaction-10');
+                        var urlPagina = document.URL;
+                        if(menu != null){
+                            menu.addEventListener('click', function() { 
+                                setTimeout(function() {
+                                    interacaoSelect(urlPagina, 1);
+                                }, 3000);                           
+                            });
+                        }else{
+                            interacaoSelect(urlPagina, 2);
+                        }
+                    }
+                    function interacaoSelect(params_url, params_tipo){
+                        var pagina_id = params_url.lastIndexOf('='); 
+                        var activities = document.getElementById('id_activitySelector');
+                        var cmid = document.getElementById('cmid').value;
+                        if(params_tipo == 1){
+                            var url_redirecionamento = 'addrandom.php?returnurl='+params_url+'&data-addonpage=0&cmid='+cmid+'&appendqnumstring=addarandomquestion&idCategory=';
+                        }else{
+                            var url = params_url.split('return');
+                            var comp_url = url[1].split('?');
+                            var url_redirecionamento = url[0] +'return'+ comp_url[0]+'?cmid='+cmid+'&data-addonpage=0&cmid='+cmid+'&appendqnumstring=addarandomquestion&idCategory=';
+                        }
+                        activities.addEventListener('change', function() { 
+                            var categoria_id = this.value;
+                            window.location.href = url_redirecionamento + categoria_id;
+                        });
+                        document.getElementById('id_category').value = params_url.substring(pagina_id+1);
+                    } 
+                </script>";
+        }
     //  }
+    
 }

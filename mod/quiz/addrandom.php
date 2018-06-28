@@ -214,8 +214,7 @@ $mform->display();
 
 //  Demanda ( Questoes aleatorias ){
 //  Responsavel por alterar a quantidade de questoes de acordo com a categoria escolhida
-    // quiz_add_random_form::call_js($CFG->wwwroot, $PAGE->url);
-    // $PAGE->requer->js_call_amd('http://localhost/moodle35/mod/quiz/my-file.js');
+    quiz_add_random_form::call_js();
 //  }
 
 echo $OUTPUT->footer();
