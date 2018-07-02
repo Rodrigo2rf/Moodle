@@ -716,6 +716,16 @@ class view {
         }
         $questions = $this->load_page_questions($page, $perpage);
 
+        //  Demanda ( Questoes aleatorias ) +++ 
+        //  Exibir um resumo das questões
+            $this->show_review_questions();
+            if (is_siteadmin()){
+                $resumo_questoes_editadas = 'Para visualizar o resumo de todos os questionários editados,';
+                $clique_aqui = 'Clique Aqui';
+                echo "<br>{$resumo_questoes_editadas} <a href='review_questions.php?categoryid={$this->course->category}&courseid={$this->course->id}'>{$clique_aqui}</a><br><br>";
+            }
+        //  +++ 
+
         echo '<div class="categorypagingbarcontainer">';
         $pageingurl = new \moodle_url('edit.php');
         $r = $pageingurl->params($pageurl->params());
@@ -1005,18 +1015,18 @@ class view {
             $total++;
         }
 
-        echo '<div class="infoadministrator">';
-        echo get_string('qtdquest', 'moodle') . $total . '<br>';
+        echo '<div class="infoadministrator"><br>';
+        echo 'Total de questões: ' . $total . '<br>';
             if( $aprovadas + $reprovadas == 0 ){
-                echo get_string('nquesteditada', 'moodle') . '<br>';
+                echo 'Nenhuma questão foi editada: '. '<br>';
             }else{
-                echo get_string('qtdquestvalidadas', 'moodle') . ( $aprovadas + $reprovadas ) . '<br>';
+                echo 'Quantidade de questões validadas: ' . ( $aprovadas + $reprovadas ) . '<br>';
             }
             if($aprovadas >= 1){
-                echo get_string('qtdquestaprovadas', 'moodle') . $aprovadas . '<br>';
+                echo 'Quantidade de questões aprovadas: ' . $aprovadas . '<br>';
             }
             if($reprovadas >= 1){
-                echo get_string('qtdquestnaoaprovadas', 'moodle') . $reprovadas . '<br>';
+                echo 'Quantidade de questões não aprovadas:' . $reprovadas . '<br>';
             }
         echo '</div>';
         
