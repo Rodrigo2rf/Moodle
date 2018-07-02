@@ -659,6 +659,12 @@ class qformat_default {
         $question->penalty = 0.3333333;
         $question->length = 1;
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $question->nivel = NULL;
+            $question->validada = NULL;
+            $question->observacao = NULL;
+        //  +++
+
         // this option in case the questiontypes class wants
         // to know where the data came from
         $question->export_process = true;

@@ -209,6 +209,12 @@ class qtype_randomsamatch extends question_type {
             $fromform->$extra = $format->getpath($xml, array('#', $extra, 0, '#'), '', true);
         }
 
+        // Demanda ( Questoes Aleatorias ) +++
+            $fromform->nivel = $xml['#']['nivel'][0]['#']['text'][0]['#'];
+            $fromform->validada = $xml['#']['validada'][0]['#']['text'][0]['#'];
+            $fromform->observacao = $xml['#']['observacao'][0]['#']['text'][0]['#'];
+        // +++
+
         return $fromform;
     }
 

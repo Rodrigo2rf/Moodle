@@ -159,6 +159,11 @@ class qformat_gift extends qformat_default {
     }
 
     public function readquestion($lines) {
+
+        //  Demanda ( Questoes aleatorias ) +++
+            $info = explode("&&", $lines[1]);
+        //  +++
+
         // Given an array of lines known to define a question in this format, this function
         // converts it into a question object suitable for processing and insertion into Moodle.
 
@@ -193,6 +198,23 @@ class qformat_gift extends qformat_default {
             $question->category = $newcategory;
             return $question;
         }
+
+        //  Demanda ( Questoes aleatorias ) +++
+            $question->nivel = str_replace("nivel:","",$info[1]);
+            if($question->nivel == ''){
+                $question->nivel = NULL;
+            }
+
+            $question->validada = str_replace("validada:","",$info[2]);
+            if($question->validada == ''){
+                $question->validada = NULL;
+            }
+
+            $question->observacao = str_replace("observacao:","",$info[3]);
+            if($question->observacao == ''){
+                $question->observacao = NULL;
+            }
+        //  +++
 
         // Question name parser.
         if (substr($text, 0, 2) == '::') {
@@ -634,7 +656,12 @@ class qformat_gift extends qformat_default {
         global $OUTPUT;
 
         // Start with a comment.
-        $expout = "// question: {$question->id}  name: {$question->name}\n";
+
+        //  Demanda ( Questoes aleatorias ) +++
+            // $expout = "// question: {$question->id}  name: {$question->name}\n";
+            $expout  = "// question: {$question->id}  name: {$question->name}\n"; //(default moodle)
+            $expout .= "// &&nivel:{$question->nivel}&&validada:{$question->validada}&&observacao:{$question->observacao}\n";
+        //  +++
 
         // Output depends on question type.
         switch($question->qtype) {

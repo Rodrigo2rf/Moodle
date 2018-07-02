@@ -457,6 +457,12 @@ class qformat_xml extends qformat_default {
         $this->import_combined_feedback($qo, $question, true);
         $this->import_hints($qo, $question, true, false, $this->get_format($qo->questiontextformat));
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -528,6 +534,12 @@ class qformat_xml extends qformat_default {
         $this->import_hints($qo, $question, true, false, $this->get_format($qo->questiontextformat));
         $this->import_question_tags($qo, $question);
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -587,6 +599,12 @@ class qformat_xml extends qformat_default {
 
         $this->import_hints($qo, $question, false, false, $this->get_format($qo->questiontextformat));
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -618,6 +636,12 @@ class qformat_xml extends qformat_default {
 
         $this->import_hints($qo, $question, false, false, $this->get_format($qo->questiontextformat));
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -633,6 +657,13 @@ class qformat_xml extends qformat_default {
         $qo->qtype = 'description';
         $qo->defaultmark = 0;
         $qo->length = 0;
+
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -703,6 +734,12 @@ class qformat_xml extends qformat_default {
 
         $this->import_hints($qo, $question, false, false, $this->get_format($qo->questiontextformat));
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -735,6 +772,12 @@ class qformat_xml extends qformat_default {
         $this->import_combined_feedback($qo, $question, true);
         $this->import_hints($qo, $question, true, false, $this->get_format($qo->questiontextformat));
 
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
+
         return $qo;
     }
 
@@ -766,6 +809,12 @@ class qformat_xml extends qformat_default {
                 array('#', 'responsetemplate', 0, '#', 'text', 0, '#'), '', true);
         $qo->responsetemplate['format'] = $this->trans_format($this->getpath($question,
                 array('#', 'responsetemplate', 0, '@', 'format'), $this->get_format($qo->questiontextformat)));
+
+        // Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //+++
 
         return $qo;
     }
@@ -900,6 +949,12 @@ class qformat_xml extends qformat_default {
         }
 
         $this->import_hints($qo, $question, false, false, $this->get_format($qo->questiontextformat));
+
+        //  Demanda ( Questoes aleatorias ) +++
+            $qo->nivel      = $this->import_text($question['#']['nivel'][0]['#']['text']);
+            $qo->validada   = $this->import_text($question['#']['validada'][0]['#']['text']);
+            $qo->observacao = $this->import_text($question['#']['observacao'][0]['#']['text']);
+        //  +++
 
         return $qo;
     }
@@ -1187,6 +1242,19 @@ class qformat_xml extends qformat_default {
         // Now we know we are are handing a real question.
         // Output the generic information.
         $expout .= "  <question type=\"{$questiontype}\">\n";
+
+        //  Demanda ( Questoes aleatorias ) +++
+            $expout .= "    <nivel>\n";
+            $expout .= $this->writetext($question->nivel, 3);
+            $expout .= "    </nivel>\n";
+            $expout .= "    <validada>\n";
+            $expout .= $this->writetext($question->validada, 3);
+            $expout .= "    </validada>\n";
+            $expout .= "    <observacao>\n";
+            $expout .= $this->writetext($question->observacao, 3);
+            $expout .= "    </observacao>\n";
+        //  +++ 
+
         $expout .= "    <name>\n";
         $expout .= $this->writetext($question->name, 3);
         $expout .= "    </name>\n";

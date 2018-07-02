@@ -103,6 +103,12 @@ class qtype_ddwtos extends qtype_gapselect_base {
         $format->import_hints($question, $data, true, false,
                 $format->get_format($question->questiontextformat));
 
+        // Demanda ( Questoes Aleatorias ) +++
+            $question->nivel = $data['#']['nivel'][0]['#']['text'][0]['#'];
+            $question->validada = $data['#']['validada'][0]['#']['text'][0]['#'];
+            $question->observacao = $data['#']['observacao'][0]['#']['text'][0]['#'];
+        // +++
+
         return $question;
     }
 
