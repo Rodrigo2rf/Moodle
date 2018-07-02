@@ -996,7 +996,7 @@ class view {
         INNER JOIN mdl_context cxt ON cxt.instanceid = c.id
         INNER JOIN mdl_question_categories qc ON qc.contextid = cxt.id
         INNER JOIN mdl_question q ON q.category = qc.id
-        WHERE c.id = {$courseid} AND q.qtype != 'random'";
+        WHERE c.id = {$courseid} AND q.qtype != 'random' AND q.hidden = 0";
 
         $sql_get_questions = $sql_get_questions . " AND q.category IN ({$params})";
 
@@ -1026,7 +1026,7 @@ class view {
                 echo 'Quantidade de questões aprovadas: ' . $aprovadas . '<br>';
             }
             if($reprovadas >= 1){
-                echo 'Quantidade de questões não aprovadas:' . $reprovadas . '<br>';
+                echo 'Quantidade de questões não aprovadas: ' . $reprovadas . '<br>';
             }
         echo '</div>';
         
